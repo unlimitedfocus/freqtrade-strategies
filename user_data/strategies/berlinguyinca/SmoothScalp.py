@@ -32,15 +32,15 @@ class SmoothScalp(IStrategy):
     # should not be below 3% loss
 
     stoploss = -0.5
-    # Optimal ticker interval for the strategy
+    # Optimal timeframe for the strategy
     # the shorter the better
-    ticker_interval = '1m'
+    timeframe = '1m'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe['ema_high'] = ta.EMA(dataframe, timeperiod=5, price='high')
         dataframe['ema_close'] = ta.EMA(dataframe, timeperiod=5, price='close')
         dataframe['ema_low'] = ta.EMA(dataframe, timeperiod=5, price='low')
-        stoch_fast = ta.STOCHF(dataframe, 5.0, 3.0, 0.0, 3.0, 0.0)
+        stoch_fast = ta.STOCHF(dataframe, 5, 3, 0, 3, 0)
         dataframe['fastd'] = stoch_fast['fastd']
         dataframe['fastk'] = stoch_fast['fastk']
         dataframe['adx'] = ta.ADX(dataframe)
@@ -62,7 +62,7 @@ class SmoothScalp(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (
@@ -81,7 +81,7 @@ class SmoothScalp(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (

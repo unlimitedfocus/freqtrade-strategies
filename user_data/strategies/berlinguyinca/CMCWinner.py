@@ -40,10 +40,10 @@ class CMCWinner(IStrategy):
     # This attribute will be overridden if the config file contains "stoploss"
     stoploss = -0.05
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '15m'
+    # Optimal timeframe for the strategy
+    timeframe = '15m'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Adds several different TA indicators to the given DataFrame
 
@@ -57,13 +57,13 @@ class CMCWinner(IStrategy):
 
         # MFI
         dataframe['mfi'] = ta.MFI(dataframe)
-		
+
 		# CMO
         dataframe['cmo'] = ta.CMO(dataframe)
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the buy signal for the given dataframe
         :param dataframe: DataFrame
@@ -79,7 +79,7 @@ class CMCWinner(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the sell signal for the given dataframe
         :param dataframe: DataFrame

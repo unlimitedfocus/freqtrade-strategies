@@ -3,6 +3,7 @@ from freqtrade.strategy.interface import IStrategy
 from pandas import DataFrame
 # --------------------------------
 import talib.abstract as ta
+from technical.util import resample_to_interval, resampled_merge
 
 
 class MultiRSI(IStrategy):
@@ -20,15 +21,13 @@ class MultiRSI(IStrategy):
     # Optimal stoploss designed for the strategy
     stoploss = -0.05
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '5m'
+    # Optimal timeframe for the strategy
+    timeframe = '5m'
 
     def get_ticker_indicator(self):
-        return int(self.ticker_interval[:-1])
+        return int(self.timeframe[:-1])
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
-        from technical.util import resample_to_interval
-        from technical.util import resampled_merge
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         dataframe['sma5'] = ta.SMA(dataframe, timeperiod=5)
         dataframe['sma200'] = ta.SMA(dataframe, timeperiod=200)
@@ -51,7 +50,7 @@ class MultiRSI(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 # must be bearish
@@ -61,7 +60,7 @@ class MultiRSI(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (dataframe['rsi'] > dataframe['resample_{}_rsi'.format(self.get_ticker_indicator()*2)]) &

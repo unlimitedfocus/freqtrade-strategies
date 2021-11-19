@@ -20,12 +20,11 @@ class CCIStrategy(IStrategy):
     # This attribute will be overridden if the config file contains "stoploss"
     stoploss = -0.02
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '1m'
+    # Optimal timeframe for the strategy
+    timeframe = '1m'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
-        macd = ta.MACD(dataframe)
-        dataframe = CCIStrategy.resample(dataframe, self.ticker_interval, 5)
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = self.resample(dataframe, self.timeframe, 5)
 
         dataframe['cci_one'] = ta.CCI(dataframe, timeperiod=170)
         dataframe['cci_two'] = ta.CCI(dataframe, timeperiod=34)
@@ -42,7 +41,7 @@ class CCIStrategy(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the buy signal for the given dataframe
         :param dataframe: DataFrame
@@ -64,7 +63,7 @@ class CCIStrategy(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the sell signal for the given dataframe
         :param dataframe: DataFrame
@@ -95,8 +94,7 @@ class CCIStrategy(IStrategy):
 
         return Series(cmf, name='cmf')
 
-    @staticmethod
-    def resample(dataframe, interval, factor):
+    def resample(self, dataframe, interval, factor):
         # defines the reinforcement logic
         # resampled dataframe to establish if we are in an uptrend, downtrend or sideways trend
         df = dataframe.copy()
@@ -107,7 +105,7 @@ class CCIStrategy(IStrategy):
             'low': 'min',
             'close': 'last'
         }
-        df = df.resample(str(int(interval[:-1]) * factor) + 'min').agg(ohlc_dict)
+        df = df.resample(str(int(interval[:-1]) * factor) + 'min', label="right").agg(ohlc_dict)
         df['resample_sma'] = ta.SMA(df, timeperiod=100, price='close')
         df['resample_medium'] = ta.SMA(df, timeperiod=50, price='close')
         df['resample_short'] = ta.SMA(df, timeperiod=25, price='close')

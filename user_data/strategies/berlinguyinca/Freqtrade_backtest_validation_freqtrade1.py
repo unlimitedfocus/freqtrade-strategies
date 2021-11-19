@@ -11,7 +11,6 @@ from pandas import DataFrame
 # Add your lib to import here
 import talib.abstract as ta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
-import numpy
 
 
 class Freqtrade_backtest_validation_freqtrade1(IStrategy):
@@ -23,16 +22,16 @@ class Freqtrade_backtest_validation_freqtrade1(IStrategy):
         "0": 2.04
     }
 
-    stoploss = -09.90
-    ticker_interval = '1h'
+    stoploss = -0.90
+    timeframe = '1h'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         # SMA - Simple Moving Average
         dataframe['fastMA'] = ta.SMA(dataframe, timeperiod=14)
         dataframe['slowMA'] = ta.SMA(dataframe, timeperiod=28)
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (dataframe['fastMA'] > dataframe['slowMA'])
@@ -41,7 +40,7 @@ class Freqtrade_backtest_validation_freqtrade1(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (dataframe['fastMA'] < dataframe['slowMA'])

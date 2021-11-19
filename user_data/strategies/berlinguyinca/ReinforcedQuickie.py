@@ -37,8 +37,8 @@ class ReinforcedQuickie(IStrategy):
     # This attribute will be overridden if the config file contains "stoploss"
     stoploss = -0.05
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '5m'
+    # Optimal timeframe for the strategy
+    timeframe = '5m'
 
     # resample factor to establish our general trend. Basically don't buy if a trend is not given
     resample_factor = 12
@@ -47,8 +47,8 @@ class ReinforcedQuickie(IStrategy):
     EMA_MEDIUM_TERM = 12
     EMA_LONG_TERM = 21
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
-        dataframe = ReinforcedQuickie.resample(dataframe, self.ticker_interval, self.resample_factor)
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = self.resample(dataframe, self.timeframe, self.resample_factor)
 
         ##################################################################################
         # buy and sell indicators
@@ -93,7 +93,7 @@ class ReinforcedQuickie(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the buy signal for the given dataframe
         :param dataframe: DataFrame
@@ -138,7 +138,7 @@ class ReinforcedQuickie(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the sell signal for the given dataframe
         :param dataframe: DataFrame
@@ -171,8 +171,7 @@ class ReinforcedQuickie(IStrategy):
         ] = 1
         return dataframe
 
-    @staticmethod
-    def resample( dataframe, interval, factor):
+    def resample(self, dataframe, interval, factor):
         # defines the reinforcement logic
         # resampled dataframe to establish if we are in an uptrend, downtrend or sideways trend
         df = dataframe.copy()
@@ -183,8 +182,8 @@ class ReinforcedQuickie(IStrategy):
             'low': 'min',
             'close': 'last'
         }
-        df = df.resample(str(int(interval[:-1]) * factor) + 'min', how=ohlc_dict).dropna(
-            how='any')
+        df = df.resample(str(int(interval[:-1]) * factor) + 'min',
+                         label="right").agg(ohlc_dict).dropna(how='any')
         df['resample_sma'] = ta.SMA(df, timeperiod=25, price='close')
         df = df.drop(columns=['open', 'high', 'low', 'close'])
         df = df.resample(interval[:-1] + 'min')

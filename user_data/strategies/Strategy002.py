@@ -1,6 +1,6 @@
 
 # --- Do not remove these libs ---
-from freqtrade.strategy.interface import IStrategy
+from freqtrade.strategy import IStrategy
 from typing import Dict, List
 from functools import reduce
 from pandas import DataFrame
@@ -10,7 +10,8 @@ import talib.abstract as ta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 import numpy # noqa
 
-class strategy002(IStrategy):
+
+class Strategy002(IStrategy):
     """
     Strategy 002
     author@: Gerald Lonlas
@@ -31,12 +32,46 @@ class strategy002(IStrategy):
 
     # Optimal stoploss designed for the strategy
     # This attribute will be overridden if the config file contains "stoploss"
-    stoploss = -0.3
+    stoploss = -0.10
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '5m'
+    # Optimal timeframe for the strategy
+    timeframe = '5m'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    # trailing stoploss
+    trailing_stop = False
+    trailing_stop_positive = 0.01
+    trailing_stop_positive_offset = 0.02
+
+    # run "populate_indicators" only for new candle
+    process_only_new_candles = False
+
+    # Experimental settings (configuration will overide these if set)
+    use_sell_signal = True
+    sell_profit_only = True
+    ignore_roi_if_buy_signal = False
+
+    # Optional order type mapping
+    order_types = {
+        'buy': 'limit',
+        'sell': 'limit',
+        'stoploss': 'market',
+        'stoploss_on_exchange': False
+    }
+
+    def informative_pairs(self):
+        """
+        Define additional, informative pair/interval combinations to be cached from the exchange.
+        These pair/interval combinations are non-tradeable, unless they are part
+        of the whitelist as well.
+        For more information, please consult the documentation
+        :return: List of tuples in the format (pair, interval)
+            Sample: return [("ETH/USDT", "5m"),
+                            ("BTC/USDT", "15m"),
+                            ]
+        """
+        return []
+
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Adds several different TA indicators to the given DataFrame
 
@@ -68,7 +103,7 @@ class strategy002(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the buy signal for the given dataframe
         :param dataframe: DataFrame
@@ -85,7 +120,7 @@ class strategy002(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the sell signal for the given dataframe
         :param dataframe: DataFrame

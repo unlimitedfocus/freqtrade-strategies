@@ -7,7 +7,7 @@ import talib.abstract as ta
 # --------------------------------
 
 
-class ADXMomentun(IStrategy):
+class ADXMomentum(IStrategy):
     """
 
     author@: Gert Wohlgemuth
@@ -28,10 +28,13 @@ class ADXMomentun(IStrategy):
     # Optimal stoploss designed for the strategy
     stoploss = -0.25
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '1h'
+    # Optimal timeframe for the strategy
+    timeframe = '1h'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    # Number of candles the strategy requires before producing valid signals
+    startup_candle_count: int = 20
+
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe['adx'] = ta.ADX(dataframe, timeperiod=14)
         dataframe['plus_di'] = ta.PLUS_DI(dataframe, timeperiod=25)
         dataframe['minus_di'] = ta.MINUS_DI(dataframe, timeperiod=25)
@@ -40,7 +43,19 @@ class ADXMomentun(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe.loc[
+            (
+                    (dataframe['adx'] > 25) &
+                    (dataframe['mom'] > 0) &
+                    (dataframe['plus_di'] > 25) &
+                    (dataframe['plus_di'] > dataframe['minus_di'])
+
+            ),
+            'buy'] = 1
+        return dataframe
+
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['adx'] > 25) &
@@ -49,17 +64,5 @@ class ADXMomentun(IStrategy):
                     (dataframe['plus_di'] < dataframe['minus_di'])
 
             ),
-            'buy'] = 1
-        return dataframe
-
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
-        dataframe.loc[
-            (
-                    (dataframe['adx'] > 25) &
-                    (dataframe['mom'] > 0) &
-                    (dataframe['minus_di'] > 25) &
-                    (dataframe['plus_di'] > dataframe['minus_di'])
-
-            ),
-            'sell'] = 0
+            'sell'] = 1
         return dataframe

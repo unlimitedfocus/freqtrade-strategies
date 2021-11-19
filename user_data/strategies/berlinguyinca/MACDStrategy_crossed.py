@@ -1,3 +1,4 @@
+
 # --- Do not remove these libs ---
 from freqtrade.strategy.interface import IStrategy
 from typing import Dict, List
@@ -7,50 +8,42 @@ from pandas import DataFrame
 
 import talib.abstract as ta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
-from typing import Dict, List
-from functools import reduce
-from pandas import DataFrame, DatetimeIndex, merge
-# --------------------------------
-
-import talib.abstract as ta
-import freqtrade.vendor.qtpylib.indicators as qtpylib
-import numpy  # noqa
 
 
-class ClucMay72018(IStrategy):
+class MACDStrategy_crossed(IStrategy):
     """
-
-    author@: Gert Wohlgemuth
-
-    works on new objectify branch!
-
+        buy:
+            MACD crosses MACD signal above
+            and CCI < -50
+        sell:
+            MACD crosses MACD signal below
+            and CCI > 100
     """
 
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi"
     minimal_roi = {
-        "0": 0.01
+        "60":  0.01,
+        "30":  0.03,
+        "20":  0.04,
+        "0":  0.05
     }
 
     # Optimal stoploss designed for the strategy
     # This attribute will be overridden if the config file contains "stoploss"
-    stoploss = -0.05
+    stoploss = -0.3
 
     # Optimal timeframe for the strategy
     timeframe = '5m'
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe['rsi'] = ta.RSI(dataframe, timeperiod=5)
-        rsiframe = DataFrame(dataframe['rsi']).rename(columns={'rsi': 'close'})
-        dataframe['emarsi'] = ta.EMA(rsiframe, timeperiod=5)
+
         macd = ta.MACD(dataframe)
         dataframe['macd'] = macd['macd']
-        dataframe['adx'] = ta.ADX(dataframe)
-        bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=2)
-        dataframe['bb_lowerband'] = bollinger['lower']
-        dataframe['bb_middleband'] = bollinger['mid']
-        dataframe['bb_upperband'] = bollinger['upper']
-        dataframe['ema100'] = ta.EMA(dataframe, timeperiod=50)
+        dataframe['macdsignal'] = macd['macdsignal']
+        dataframe['macdhist'] = macd['macdhist']
+        dataframe['cci'] = ta.CCI(dataframe)
+
         return dataframe
 
     def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
@@ -61,9 +54,8 @@ class ClucMay72018(IStrategy):
         """
         dataframe.loc[
             (
-                    (dataframe['close'] < dataframe['ema100']) &
-                    (dataframe['close'] < 0.985 * dataframe['bb_lowerband']) &
-                    (dataframe['volume'] < (dataframe['volume'].rolling(window=30).mean().shift(1) * 20))
+                qtpylib.crossed_above(dataframe['macd'], dataframe['macdsignal']) &
+                (dataframe['cci'] <= -50.0)
             ),
             'buy'] = 1
 
@@ -77,7 +69,9 @@ class ClucMay72018(IStrategy):
         """
         dataframe.loc[
             (
-                (dataframe['close'] > dataframe['bb_middleband'])
+                qtpylib.crossed_below(dataframe['macd'], dataframe['macdsignal']) &
+                (dataframe['cci'] >= 100.0)
             ),
             'sell'] = 1
+
         return dataframe

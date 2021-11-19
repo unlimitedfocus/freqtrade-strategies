@@ -26,9 +26,11 @@ class BinHV27(IStrategy):
     minimal_roi = {
         "0": 1
     }
+
     stoploss = -0.50
-    ticker_interval = '5m'
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    timeframe = '5m'
+
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe['rsi'] = numpy.nan_to_num(ta.RSI(dataframe, timeperiod=5))
         rsiframe = DataFrame(dataframe['rsi']).rename(columns={'rsi': 'close'})
         dataframe['emarsi'] = numpy.nan_to_num(ta.EMA(rsiframe, timeperiod=5))
@@ -52,7 +54,7 @@ class BinHV27(IStrategy):
         dataframe['delta'] = dataframe['fastsma'] - dataframe['fastsma'].shift()
         dataframe['slowingdown'] = dataframe['delta'].lt(dataframe['delta'].shift())
         return dataframe
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             dataframe['slowsma'].gt(0) &
             dataframe['close'].lt(dataframe['highsma']) &
@@ -89,33 +91,23 @@ class BinHV27(IStrategy):
             ),
             'buy'] = 1
         return dataframe
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
-        buyframe = dataframe[dataframe['buy'] == 1].tail(1)
-        if len(buyframe) == 0:
-          dataframe.loc[[False], 'sell'] = 0
-          return dataframe
-        trend = buyframe.iloc[0]['trend']
-        bigup = buyframe.iloc[0]['bigup']
-        bigdown = buyframe.iloc[0]['bigdown']
-        price = buyframe.iloc[0]['close']
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
               (
-                bigup &
                 ~dataframe['preparechangetrendconfirm'] &
                 ~dataframe['continueup'] &
                 (dataframe['close'].gt(dataframe['lowsma']) | dataframe['close'].gt(dataframe['highsma'])) &
                 dataframe['highsma'].gt(0) &
-                (dataframe['bigdown'] | dataframe['trend'].lt(trend))
+                dataframe['bigdown']
               ) |
               (
-                bigdown &
                 ~dataframe['preparechangetrendconfirm'] &
                 ~dataframe['continueup'] &
                 dataframe['close'].gt(dataframe['highsma']) &
                 dataframe['highsma'].gt(0) &
                 (dataframe['emarsi'].ge(75) | dataframe['close'].gt(dataframe['slowsma'])) &
-                (dataframe['bigdown'] | dataframe['trend'].lt(trend))
+                dataframe['bigdown']
               ) |
               (
                 ~dataframe['preparechangetrendconfirm'] &

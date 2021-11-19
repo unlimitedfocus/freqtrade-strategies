@@ -31,10 +31,10 @@ class Quickie(IStrategy):
     # This attribute will be overridden if the config file contains "stoploss"
     stoploss = -0.25
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '5m'
+    # Optimal timeframe for the strategy
+    timeframe = '5m'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         macd = ta.MACD(dataframe)
         dataframe['macd'] = macd['macd']
         dataframe['macdsignal'] = macd['macdsignal']
@@ -54,7 +54,7 @@ class Quickie(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['adx'] > 30) &
@@ -66,7 +66,7 @@ class Quickie(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['adx'] > 70) &

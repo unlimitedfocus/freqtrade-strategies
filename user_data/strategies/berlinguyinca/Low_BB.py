@@ -42,10 +42,10 @@ class Low_BB(IStrategy):
     # This attribute will be overridden if the config file contains "stoploss"
     stoploss = -0.015
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '1m'
+    # Optimal timeframe for the strategy
+    timeframe = '1m'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         ##################################################################################
         # buy and sell indicators
 
@@ -79,7 +79,7 @@ class Low_BB(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the buy signal for the given dataframe
         :param dataframe: DataFrame
@@ -96,7 +96,7 @@ class Low_BB(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the sell signal for the given dataframe
         :param dataframe: DataFrame
@@ -104,5 +104,5 @@ class Low_BB(IStrategy):
         """
         dataframe.loc[
             (),
-            'sell'] = 0
+            'sell'] = 1
         return dataframe

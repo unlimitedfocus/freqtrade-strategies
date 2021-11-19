@@ -29,10 +29,10 @@ class AwesomeMacd(IStrategy):
     # Optimal stoploss designed for the strategy
     stoploss = -0.25
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '1h'
+    # Optimal timeframe for the strategy
+    timeframe = '1h'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe['adx'] = ta.ADX(dataframe, timeperiod=14)
         dataframe['ao'] = qtpylib.awesome_oscillator(dataframe)
 
@@ -43,7 +43,7 @@ class AwesomeMacd(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['macd'] > 0) &
@@ -54,7 +54,7 @@ class AwesomeMacd(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['macd'] < 0) &
@@ -62,5 +62,5 @@ class AwesomeMacd(IStrategy):
                     (dataframe['ao'].shift() > 0)
 
             ),
-            'sell'] = 0
+            'sell'] = 1
         return dataframe

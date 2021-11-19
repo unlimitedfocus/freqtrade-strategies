@@ -29,10 +29,10 @@ class BbandRsi(IStrategy):
     # Optimal stoploss designed for the strategy
     stoploss = -0.25
 
-    # Optimal ticker interval for the strategy
-    ticker_interval = '1h'
+    # Optimal timeframe for the strategy
+    timeframe = '1h'
 
-    def populate_indicators(self, dataframe: DataFrame) -> DataFrame:
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
 
         # Bollinger bands
@@ -43,7 +43,7 @@ class BbandRsi(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['rsi'] < 30) &
@@ -53,11 +53,11 @@ class BbandRsi(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame) -> DataFrame:
+    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['rsi'] > 70)
 
             ),
-            'sell'] = 0
+            'sell'] = 1
         return dataframe
